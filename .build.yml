@@ -1,0 +1,14 @@
+image: archlinux
+packages:
+  - go
+sources:
+  - https://github.com/go-ap/cache
+environment:
+  GO111MODULE: 'on'
+tasks:
+  - tests: |
+      cd cache
+      make test
+  - coverage: |
+      set -a +x
+      cd cache && make coverage
