@@ -19,11 +19,11 @@ type (
 	}
 )
 
-func New(enabled bool) store {
-	return store{enabled: enabled, c: sync.Map{}}
+func New(enabled bool) *store {
+	return &store{enabled: enabled, c: sync.Map{}}
 }
 
-func (r store) Load(iri vocab.IRI) vocab.Item {
+func (r *store) Load(iri vocab.IRI) vocab.Item {
 	if !r.enabled {
 		return nil
 	}
@@ -38,14 +38,14 @@ func (r store) Load(iri vocab.IRI) vocab.Item {
 	return it
 }
 
-func (r store) Store(iri vocab.IRI, it vocab.Item) {
+func (r *store) Store(iri vocab.IRI, it vocab.Item) {
 	if !r.enabled {
 		return
 	}
 	r.c.Store(iri, it)
 }
 
-func (r store) Clear() {
+func (r *store) Clear() {
 	if !r.enabled {
 		return
 	}
@@ -55,7 +55,7 @@ func (r store) Clear() {
 	})
 }
 
-func (r store) Delete(iris ...vocab.IRI) bool {
+func (r *store) Delete(iris ...vocab.IRI) bool {
 	if !r.enabled {
 		return true
 	}
