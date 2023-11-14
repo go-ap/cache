@@ -2,7 +2,7 @@ module github.com/go-ap/cache
 
 go 1.20
 
-require github.com/go-ap/activitypub v0.0.0-20231105151936-af32623a589b
+require github.com/go-ap/activitypub v0.0.0-20231114162308-e219254dc5c9
 
 require (
 	git.sr.ht/~mariusor/go-xsd-duration v0.0.0-20220703122237-02e73435a078 // indirect
