@@ -86,7 +86,7 @@ func accumForProperty(it vocab.Item, toRemove *vocab.IRIs, col vocab.CollectionP
 		return
 	}
 	if vocab.IsItemCollection(it) {
-		vocab.OnItemCollection(it, func(c *vocab.ItemCollection) error {
+		_ = vocab.OnItemCollection(it, func(c *vocab.ItemCollection) error {
 			for _, ob := range c.Collection() {
 				removeAccum(toRemove, ob.GetLink(), col)
 			}
@@ -136,11 +136,17 @@ func aggregateActivityIRIs(toRemove *vocab.IRIs, a *vocab.Activity, typ vocab.Co
 		*toRemove = append(*toRemove, aIRI)
 	}
 
+	activityType := a.GetType()
 	withSideEffects := vocab.ActivityVocabularyTypes{vocab.UpdateType, vocab.UndoType, vocab.DeleteType}
-	if withSideEffects.Contains(a.GetType()) {
+	if withSideEffects.Contains(activityType) {
 		base := path.Dir(a.Object.GetLink().String())
 		*toRemove = append(*toRemove, vocab.IRI(base))
 		*toRemove = append(*toRemove, a.Object.GetLink())
+	}
+	likedTypes := vocab.ActivityVocabularyTypes{vocab.LikeType, vocab.DislikeType}
+	if likedTypes.Contains(activityType) {
+		*toRemove = append(*toRemove, vocab.Likes.Of(a.Object).GetLink())
+		*toRemove = append(*toRemove, vocab.Liked.Of(a.Actor).GetLink())
 	}
 
 	return aggregateItemIRIs(toRemove, a.Object)
