@@ -2,11 +2,11 @@ module github.com/go-ap/cache
 
 go 1.18
 
-require github.com/go-ap/activitypub v0.0.0-20241208161221-f05aa52782bd
+require github.com/go-ap/activitypub v0.0.0-20241212161521-36eb87cc3381
 
 require (
 	git.sr.ht/~mariusor/go-xsd-duration v0.0.0-20220703122237-02e73435a078 // indirect
-	github.com/go-ap/errors v0.0.0-20240910140019-1e9d33cc1568 // indirect
+	github.com/go-ap/errors v0.0.0-20241212155021-5a598b6bf467 // indirect
 	github.com/go-ap/jsonld v0.0.0-20221030091449-f2a191312c73 // indirect
 	github.com/valyala/fastjson v1.6.4 // indirect
 )
