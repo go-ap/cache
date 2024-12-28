@@ -141,12 +141,18 @@ func aggregateActivityIRIs(toRemove *vocab.IRIs, a *vocab.Activity, typ vocab.Co
 	if withSideEffects.Contains(activityType) {
 		base := path.Dir(a.Object.GetLink().String())
 		*toRemove = append(*toRemove, vocab.IRI(base))
-		*toRemove = append(*toRemove, a.Object.GetLink())
+		if !vocab.IsNil(a.Object) {
+			*toRemove = append(*toRemove, a.Object.GetLink())
+		}
 	}
 	likedTypes := vocab.ActivityVocabularyTypes{vocab.LikeType, vocab.DislikeType}
 	if likedTypes.Contains(activityType) {
-		*toRemove = append(*toRemove, vocab.Likes.Of(a.Object).GetLink())
-		*toRemove = append(*toRemove, vocab.Liked.Of(a.Actor).GetLink())
+		if likes := vocab.Likes.Of(a.Object); !vocab.IsNil(likes) {
+			*toRemove = append(*toRemove, likes.GetLink())
+		}
+		if liked := vocab.Liked.Of(a.Actor); !vocab.IsNil(liked) {
+			*toRemove = append(*toRemove, liked.GetLink())
+		}
 	}
 
 	return aggregateItemIRIs(toRemove, a.Object)
