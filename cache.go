@@ -116,7 +116,7 @@ func aggregateItemIRIs(toRemove *vocab.IRIs, it vocab.Item) error {
 
 func aggregateActivityIRIs(toRemove *vocab.IRIs, a *vocab.Activity, typ vocab.CollectionPath) error {
 	for _, r := range a.Recipients() {
-		if r.GetLink().Equal(vocab.PublicNS, false) {
+		if r.GetLink().Equals(vocab.PublicNS, false) {
 			continue
 		}
 		if iri := r.GetLink(); vocab.ValidCollectionIRI(iri) {
