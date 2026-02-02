@@ -138,7 +138,7 @@ func aggregateActivityIRIs(toRemove *vocab.IRIs, a *vocab.Activity, typ vocab.Co
 
 	activityType := a.GetType()
 	withSideEffects := vocab.ActivityVocabularyTypes{vocab.UpdateType, vocab.UndoType, vocab.DeleteType}
-	if withSideEffects.Contains(activityType) {
+	if withSideEffects.Match(activityType) {
 		base := path.Dir(a.Object.GetLink().String())
 		*toRemove = append(*toRemove, vocab.IRI(base))
 		if !vocab.IsNil(a.Object) {
@@ -146,7 +146,7 @@ func aggregateActivityIRIs(toRemove *vocab.IRIs, a *vocab.Activity, typ vocab.Co
 		}
 	}
 	likedTypes := vocab.ActivityVocabularyTypes{vocab.LikeType, vocab.DislikeType}
-	if likedTypes.Contains(activityType) {
+	if likedTypes.Match(activityType) {
 		if likes := vocab.Likes.Of(a.Object); !vocab.IsNil(likes) {
 			*toRemove = append(*toRemove, likes.GetLink())
 		}
