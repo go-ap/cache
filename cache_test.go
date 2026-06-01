@@ -2,10 +2,10 @@ package cache
 
 import (
 	"reflect"
-	"sync"
 	"testing"
 
 	vocab "github.com/go-ap/activitypub"
+	lru "github.com/hashicorp/golang-lru"
 )
 
 func Test_reqCache_get(t *testing.T) {
@@ -36,14 +36,14 @@ func Test_reqCache_get(t *testing.T) {
 
 type iriItemMap = map[vocab.IRI]vocab.Item
 
-func iriMap(objects ...iriItemMap) sync.Map {
-	s := sync.Map{}
+func iriMap(objects ...iriItemMap) *lru.ARCCache {
+	cc, _ := lru.NewARC(defaultSize)
 	for _, entry := range objects {
 		for k, v := range entry {
-			s.Store(k, v)
+			cc.Add(k, v)
 		}
 	}
-	return s
+	return cc
 }
 
 func Test_reqCache_remove(t *testing.T) {
@@ -60,8 +60,7 @@ func Test_reqCache_remove(t *testing.T) {
 		{
 			name: "simple",
 			r: store{
-				enabled: true,
-				c:       iriMap(iriItemMap{"example1": &vocab.Object{ID: "example1"}}),
+				c: iriMap(iriItemMap{"example1": &vocab.Object{ID: "example1"}}),
 			},
 			args:      args{vocab.IRI("example1")},
 			want:      true,
@@ -70,8 +69,7 @@ func Test_reqCache_remove(t *testing.T) {
 		{
 			name: "same_url",
 			r: store{
-				enabled: true,
-				c:       iriMap(iriItemMap{"http://example.com": &vocab.Actor{ID: "http://example.com"}}),
+				c: iriMap(iriItemMap{"http://example.com": &vocab.Actor{ID: "http://example.com"}}),
 			},
 			args:      args{vocab.IRI("http://example.com")},
 			want:      true,
@@ -80,8 +78,7 @@ func Test_reqCache_remove(t *testing.T) {
 		{
 			name: "different_urls",
 			r: store{
-				enabled: true,
-				c:       iriMap(iriItemMap{"http://example.com/inbox": &vocab.Actor{ID: "http://example.com"}}),
+				c: iriMap(iriItemMap{"http://example.com/inbox": &vocab.Actor{ID: "http://example.com"}}),
 			},
 			args:      args{vocab.IRI("http://example.com")},
 			want:      true,
@@ -90,7 +87,6 @@ func Test_reqCache_remove(t *testing.T) {
 		{
 			name: "with_replies",
 			r: store{
-				enabled: true,
 				c: iriMap(iriItemMap{
 					"http://example.com/elefant": vocab.IRI("http://example.com/elefant"),
 					"http://example.com/test": &vocab.Object{
@@ -114,11 +110,11 @@ func Test_reqCache_remove(t *testing.T) {
 				t.Errorf("Delete() = %v, want %v", got, tt.want)
 			}
 			for _, iri := range tt.leftovers {
-				v, ok := tt.r.c.Load(iri)
+				v, ok := tt.r.c.Get(iri)
 				if v == nil || !ok {
 					t.Errorf("IRI should be in cache, but not found  %s", iri)
 				}
-				tt.r.c.Delete(iri)
+				tt.r.c.Remove(iri)
 			}
 		})
 	}
