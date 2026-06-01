@@ -6,11 +6,16 @@ import (
 	vocab "github.com/go-ap/activitypub"
 )
 
-func ActivityPurge(cache CanStore, a *vocab.Activity, iri vocab.IRI) error {
-	toRemove := make(vocab.IRIs, 0)
-	_, typ := vocab.Split(iri)
-	err := aggregateActivityIRIs(&toRemove, a, typ)
-	if err != nil {
+// ActivityPurge removes from cache all items related to the "a" Activity.
+// It can receive a batch of IRIs that need purging.
+// Usually this is the inbox/outbox in which the activity was received.
+func ActivityPurge(cache CanStore, a *vocab.Activity, additionalIRIs ...vocab.IRI) error {
+	toRemove := make(vocab.IRIs, 0, len(additionalIRIs))
+	for _, iri := range additionalIRIs {
+		toRemove.Append(iri)
+	}
+
+	if err := aggregateCacheableIRIs(&toRemove, a); err != nil {
 		return err
 	}
 	if len(toRemove) > 0 {
@@ -19,45 +24,54 @@ func ActivityPurge(cache CanStore, a *vocab.Activity, iri vocab.IRI) error {
 	return nil
 }
 
-func aggregateActivityIRIs(toRemove *vocab.IRIs, a *vocab.Activity, typ vocab.CollectionPath) error {
-	for _, r := range a.Recipients() {
-		if r.GetLink().Equals(vocab.PublicNS, false) {
-			continue
-		}
-		if iri := r.GetLink(); vocab.ValidCollectionIRI(iri) {
-			// TODO(marius): for followers, following collections this should dereference the members
-			if !toRemove.Contains(iri) {
-				*toRemove = append(*toRemove, iri)
-			}
-		} else {
-			accumForProperty(r, toRemove, vocab.Inbox)
-		}
-	}
-	if destCol := typ.IRI(a.Actor); !toRemove.Contains(destCol) {
-		*toRemove = append(*toRemove, destCol)
+var (
+	likedTypes      = vocab.ActivityVocabularyTypes{vocab.LikeType, vocab.DislikeType}
+	withSideEffects = vocab.ActivityVocabularyTypes{vocab.UpdateType, vocab.UndoType, vocab.DeleteType}
+)
+
+func aggregateCacheableIRIs(toRemove *vocab.IRIs, a *vocab.Activity) error {
+	if a == nil {
+		return nil
 	}
 
-	if aIRI := a.GetLink(); len(aIRI) > 0 && !toRemove.Contains(aIRI) {
-		*toRemove = append(*toRemove, aIRI)
+	// NOTE(marius): we go through the whole list of recipients for the activity to build our list of
+	// IRIs that need purging from cache.
+	for _, rec := range a.Recipients() {
+		if rec.GetLink().Equals(vocab.PublicNS, false) {
+			continue
+		}
+		// NOTE(marius): we recognize the recipient as a collection IRI, we add the whole collection to the list.
+		if iri := rec.GetLink(); vocab.ValidCollectionIRI(iri) {
+			// TODO(marius): for followers, following collections this should dereference the members
+			(*toRemove).Append(iri)
+		} else {
+			// NOTE(marius): we assume the recipient is an actor, and we want to purge their inbox from cache.
+			accumForProperty(rec, toRemove, vocab.Inbox)
+		}
+	}
+
+	if aIRI := a.GetLink(); aIRI.IsValid() {
+		(*toRemove).Append(aIRI)
 	}
 
 	activityType := a.GetType()
-	withSideEffects := vocab.ActivityVocabularyTypes{vocab.UpdateType, vocab.UndoType, vocab.DeleteType}
+	// NOTE(marius): if the Activity has side effects for its objects, we remove the object from cache.
 	if withSideEffects.Match(activityType) {
-		base := path.Dir(a.Object.GetLink().String())
-		*toRemove = append(*toRemove, vocab.IRI(base))
-		if !vocab.IsNil(a.Object) {
-			*toRemove = append(*toRemove, a.Object.GetLink())
+		(*toRemove).Append(a.Object)
+		// NOTE(marius): if the object's URL parent is a collection, we add it to the IRIs.
+		if ou, err := a.Object.GetLink().URL(); err == nil {
+			ou.Path = path.Dir(ou.Path)
+			if parent := vocab.IRI(ou.String()); vocab.ValidCollectionIRI(parent) {
+				(*toRemove).Append(parent)
+			}
 		}
 	}
-	likedTypes := vocab.ActivityVocabularyTypes{vocab.LikeType, vocab.DislikeType}
+
+	// NOTE(marius): if the Activity is an appreciation one, we remove from cache the likes/liked collections
+	// of to its object and actor.
 	if likedTypes.Match(activityType) {
-		if likes := vocab.Likes.Of(a.Object); !vocab.IsNil(likes) {
-			*toRemove = append(*toRemove, likes.GetLink())
-		}
-		if liked := vocab.Liked.Of(a.Actor); !vocab.IsNil(liked) {
-			*toRemove = append(*toRemove, liked.GetLink())
-		}
+		(*toRemove).Append(vocab.Likes.Of(a.Object))
+		(*toRemove).Append(vocab.Liked.Of(a.Actor))
 	}
 
 	return aggregateItemIRIs(toRemove, a.Object)
@@ -67,16 +81,16 @@ func accumForProperty(it vocab.Item, toRemove *vocab.IRIs, col vocab.CollectionP
 	if vocab.IsNil(it) {
 		return
 	}
-	if vocab.IsItemCollection(it) {
-		_ = vocab.OnItemCollection(it, func(c *vocab.ItemCollection) error {
-			for _, ob := range c.Collection() {
-				removeAccum(toRemove, ob.GetLink(), col)
-			}
-			return nil
-		})
-	} else {
-		removeAccum(toRemove, it.GetLink(), col)
+	if !vocab.IsItemCollection(it) {
+		(*toRemove).Append(col.IRI(it.GetLink()))
+		return
 	}
+	_ = vocab.OnItemCollection(it, func(c *vocab.ItemCollection) error {
+		for _, ob := range c.Collection() {
+			(*toRemove).Append(col.IRI(ob.GetLink()))
+		}
+		return nil
+	})
 }
 
 func aggregateItemIRIs(toRemove *vocab.IRIs, it vocab.Item) error {
@@ -94,10 +108,4 @@ func aggregateItemIRIs(toRemove *vocab.IRIs, it vocab.Item) error {
 		accumForProperty(o.AttributedTo, toRemove, vocab.Outbox)
 		return nil
 	})
-}
-
-func removeAccum(toRemove *vocab.IRIs, iri vocab.IRI, col vocab.CollectionPath) {
-	if repl := col.IRI(iri); !toRemove.Contains(repl) {
-		*toRemove = append(*toRemove, repl)
-	}
 }

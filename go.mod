@@ -4,6 +4,7 @@ go 1.25.0
 
 require (
 	github.com/go-ap/activitypub v0.0.0-20260416122353-fb80985e153a
+	github.com/google/go-cmp v0.7.0
 	github.com/hashicorp/golang-lru v1.0.2
 )
 
