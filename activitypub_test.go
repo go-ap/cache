@@ -14,6 +14,31 @@ func initToRemove() *vocab.IRIs {
 	return &tr
 }
 
+func TestActivityPurge(t *testing.T) {
+	type args struct {
+		cache          CanStore
+		a              *vocab.Activity
+		additionalIRIs []vocab.IRI
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr error
+	}{
+		{
+			name: "empty",
+			args: args{},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := ActivityPurge(tt.args.cache, tt.args.a, tt.args.additionalIRIs...)
+			if !cmp.Equal(err, tt.wantErr, equateWeakErrors) {
+				t.Errorf("ActivityPurge() error = %s", cmp.Diff(tt.wantErr, err, equateWeakErrors))
+			}
+		})
+	}
+}
 func Test_aggregateCacheableIRIs(t *testing.T) {
 	type args struct {
 		toRemove *vocab.IRIs
