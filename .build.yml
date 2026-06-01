@@ -3,6 +3,8 @@ packages:
   - go
 sources:
   - https://github.com/go-ap/cache
+secrets:
+  - b3525044-1236-4720-8d74-3eed0c0a9142
 environment:
   GO111MODULE: 'on'
 tasks:
@@ -11,4 +13,7 @@ tasks:
       make test
   - coverage: |
       set -a +x
-      cd cache && make coverage
+      cd cache
+      git switch -C master origin/master
+      make coverage
+      go tool goveralls -flagname unit-tests -service=${CI_NAME} -coverprofile cache.coverprofile -repotokenfile ~/.coveralls.tok
