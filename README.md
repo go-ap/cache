@@ -2,7 +2,7 @@
 
 [![MIT Licensed](https://img.shields.io/github/license/go-ap/cache.svg)](https://raw.githubusercontent.com/go-ap/cache/master/LICENSE)
 [![Build Status](https://builds.sr.ht/~mariusor/cache.svg)](https://builds.sr.ht/~mariusor/cache)
-[![Test Coverage](https://img.shields.io/codecov/c/github/go-ap/cache.svg)](https://codecov.io/gh/go-ap/cache)
+[![Coveralls](https://img.shields.io/coverallsCoverage/github/go-ap/cache)](https://coveralls.io/github/go-ap/cache)
 [![Go Report Card](https://goreportcard.com/badge/github.com/go-ap/cache)](https://goreportcard.com/report/github.com/go-ap/cache)
 
 This project is part of the [GoActivityPub](https://github.com/go-ap) library which helps with creating ActivityPub applications using the Go programming language.
