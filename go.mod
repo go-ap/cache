@@ -3,7 +3,7 @@ module github.com/go-ap/cache
 go 1.25.0
 
 require (
-	github.com/go-ap/activitypub v0.0.0-20260623165555-815f070c5691
+	github.com/go-ap/activitypub v0.0.0-20260628125851-a7cd06a3366f
 	github.com/google/go-cmp v0.7.0
 	github.com/hashicorp/golang-lru v1.0.2
 )
@@ -16,7 +16,7 @@ require (
 	github.com/charmbracelet/x/ansi v0.9.2 // indirect
 	github.com/charmbracelet/x/cellbuf v0.0.13 // indirect
 	github.com/charmbracelet/x/term v0.2.1 // indirect
-	github.com/go-ap/errors v0.0.0-20260607141156-afed270859b6 // indirect
+	github.com/go-ap/errors v0.0.0-20260628125720-446798ba522c // indirect
 	github.com/go-ap/jsonld v0.0.0-20260607140920-737b40e0ca38 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
