@@ -100,7 +100,7 @@ func aggregateItemIRIs(toRemove *vocab.IRIs, it vocab.Item) error {
 	if obIRI := it.GetLink(); len(obIRI) > 0 && !toRemove.Contains(obIRI) {
 		*toRemove = append(*toRemove, obIRI)
 	}
-	if !it.IsObject() {
+	if !vocab.IsObject(it) {
 		return nil
 	}
 	return vocab.OnObject(it, func(o *vocab.Object) error {
