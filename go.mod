@@ -3,7 +3,7 @@ module github.com/go-ap/cache
 go 1.26.0
 
 require (
-	github.com/go-ap/activitypub v0.0.0-20260913133145-416f1c0ed9a1
+	github.com/go-ap/activitypub v0.0.0-20260914124931-8ec3d41415b0
 	github.com/google/go-cmp v0.7.0
 	github.com/hashicorp/golang-lru v1.0.2
 )
