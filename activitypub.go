@@ -103,14 +103,14 @@ func aggregateActivityIRIs(toRemove *vocab.IRIs, a vocab.Item) error {
 		// NOTE(marius): if the Activity is an appreciation one, we remove from cache the likes/liked collections
 		// of to its object and actor.
 		case likedTypes.Match(activityType):
-			vocab.OnItem(a.Object, func(ob vocab.Item) error {
+			_ = vocab.OnItem(a.Object, func(ob vocab.Item) error {
 				return (*toRemove).Append(vocab.Likes.Of(ob))
 			})
-			vocab.OnItem(a.Actor, func(act vocab.Item) error {
+			_ = vocab.OnItem(a.Actor, func(act vocab.Item) error {
 				return (*toRemove).Append(vocab.Liked.Of(act))
 			})
 		case vocab.AnnounceType.Match(activityType):
-			vocab.OnItem(a.Object, func(ob vocab.Item) error {
+			_ = vocab.OnItem(a.Object, func(ob vocab.Item) error {
 				return (*toRemove).Append(vocab.Shares.Of(ob))
 			})
 		}
